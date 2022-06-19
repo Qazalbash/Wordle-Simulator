@@ -6,8 +6,9 @@ if __name__ == '__main__':
 
     words_filename = './allowed_words.txt'
     json_filename = './stats.json'
+    tree_filename = './game-tree.json'
 
-    w = Wordle(words_filename, json_filename)
+    w = Wordle(words_filename, json_filename, tree_filename)
 
     start = pd.Timestamp.now()
 
@@ -17,4 +18,4 @@ if __name__ == '__main__':
 
     w.save()
 
-    w.graph()
+    # w.graph()

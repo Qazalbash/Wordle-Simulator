@@ -1,36 +1,44 @@
 import json
 import random
+from functools import reduce
+from typing import Optional
 
 from matplotlib import pyplot as plt
 
 
 class Wordle:
 
-    def __init__(self: "Wordle", words_filename: str,
-                 json_filename: str) -> None:
+    def __init__(self: "Wordle", words_filename: str, stats_filename: str,
+                 tree_filename: str) -> None:
         """Constructor
 
         Args:
             self (Wordle): mandatory self object
             words_filename (str): name of file that contains words
             json_filename (str): name of file that contains stats
+            tree_filename (str): name of file that contains all games
         """
         self.all_words = list()
-        self.readfile(words_filename, json_filename)
+        self.readfile(words_filename, stats_filename, tree_filename)
+        self.stats_filename = stats_filename
+        self.tree_filename = tree_filename
 
-    def readfile(self: "Wordle", words_filename: str,
-                 stats_filename: str) -> None:
+    def readfile(self: "Wordle", words_filename: str, stats_filename: str,
+                 tree_filename: str) -> None:
         """read all necessary files
 
         Args:
             self (Wordle): mandatory self object
             words_filename (str): name of file that contains all words
             stats_filename (str): name of file that contains all stats
+            tree_filename (str): name of file that contains all games
         """
         with open(words_filename, 'r') as file:
             self.all_words = [word[:-1] for word in file]
         with open(stats_filename, "r") as file:
             self.stats = json.load(file)
+        with open(tree_filename, "r") as file:
+            self.tree = json.load(file)
 
     def evalute_guess(self: "Wordle", guess: str, color: str) -> None:
         """manage the maps in accordance to color
@@ -77,15 +85,12 @@ class Wordle:
             else:
                 color[i] = 'b'
 
-        letterPosition = 0
-
         for i in range(5):
 
             if color[i] == "*":
                 try:
-                    letterPosition = word.index(guess[i])
+                    word[word.index(guess[i])] = '#'
                     color[i] = 'y'
-                    word[letterPosition] = '#'
                 except:
                     color[i] = 'b'
 
@@ -117,7 +122,7 @@ class Wordle:
         """
         self.words = [word for word in self.words if self.valid_word(word)]
 
-    def turn(self: "Wordle", num: int) -> bool:
+    def turn(self: "Wordle", num: int, game: Optional[str]) -> bool:
         """one turn of the game
 
         Args:
@@ -132,6 +137,8 @@ class Wordle:
             guess = random.choice(self.words)
             color = self.coloring(self._hidden_word, guess)
 
+            game.append(guess)
+
             if color == "ggggg":
                 self.stats["win"][str(num)] += 1
                 return False
@@ -142,7 +149,6 @@ class Wordle:
             return True
 
         self.stats["loss"] += 1
-
         return False
 
     def start(self: "Wordle", no_of_games: int = 100) -> None:
@@ -152,6 +158,7 @@ class Wordle:
             self (Wordle): mandatory self object
             no_of_games (int, optional): no of times to play the game. Defaults to 100.
         """
+        self.all_games = []
         for _ in range(no_of_games):
 
             i = 1
@@ -163,8 +170,11 @@ class Wordle:
                 for i in range(5)
             }
 
-            while self.turn(i):
+            game = []
+
+            while self.turn(i, game):
                 i += 1
+            self.all_games.append(game)
 
     def graph(self: "Wordle") -> None:
         """generate a simple bar chart of the game stats
@@ -196,6 +206,45 @@ class Wordle:
 
         Args:
             self (Wordle): mandatory self object
-        """ 
-        with open("stats.json", "w") as outfile:
+        """
+        with open(self.stats_filename, "w") as outfile:
             json.dump(self.stats, outfile)
+
+        self.game_tree()
+
+        with open(self.tree_filename, "w") as outfile:
+            json.dump(self.tree, outfile)
+
+    def game_tree(self: "Wordle") -> None:
+        """makes the game tree
+
+        Args:
+            self (Wordle): madatory self object
+        """
+        tree = [self.tree]
+        for game in self.all_games:
+            node = None
+            for ele in game[::-1]:
+                if node is None:
+                    node = {ele: {}}
+                else:
+                    node = {ele: node}
+            tree.append(node)
+        reduce(self.recursive_merge, tree)
+
+    @staticmethod
+    def recursive_merge(d1: dict, d2: dict) -> dict:
+        """update first dict with second recursively
+
+        Args:
+            d1 (dict): first dictionary
+            d2 (dict): second dictionary
+
+        Returns:
+            dict: merged dictionary
+        """
+        for k, v in d1.items():
+            if k in d2:
+                d2[k] = Wordle.recursive_merge(v, d2[k])
+        d1.update(d2)
+        return d1
