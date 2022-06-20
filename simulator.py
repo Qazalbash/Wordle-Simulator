@@ -12,10 +12,9 @@ if __name__ == '__main__':
 
     start = pd.Timestamp.now()
 
-    w.start(1000)
+    w.play(10**5)
 
     print(pd.Timestamp.now() - start)
 
     w.save()
-
     # w.graph()

@@ -3,6 +3,7 @@ import random
 from functools import reduce
 from typing import Optional
 
+import numpy as np
 from matplotlib import pyplot as plt
 
 
@@ -128,6 +129,7 @@ class Wordle:
         Args:
             self (Wordle): mandoatory self object
             num (int): turn number
+            game (Optional[str]): words played in the game
 
         Returns:
             bool: True if game will continue to next trun else False
@@ -136,7 +138,6 @@ class Wordle:
 
             guess = random.choice(self.words)
             color = self.coloring(self._hidden_word, guess)
-
             game.append(guess)
 
             if color == "ggggg":
@@ -158,9 +159,7 @@ class Wordle:
             self (Wordle): mandatory self object
             no_of_games (int, optional): no of times to play the game. Defaults to 100.
         """
-        self.all_games = []
         for _ in range(no_of_games):
-
             i = 1
             self.allowed = set()
             self.words = self.all_words
@@ -175,6 +174,13 @@ class Wordle:
             while self.turn(i, game):
                 i += 1
             self.all_games.append(game)
+
+    def play(self: "Wordle", no_of_games: int = 1000) -> None:
+        self.all_games = []
+        vecstart = np.vectorize(self.start, otypes=None)
+        value = np.array([1000 for _ in range(no_of_games // 1000)] +
+                         [no_of_games % 1000])
+        vecstart(value)
 
     def graph(self: "Wordle") -> None:
         """generate a simple bar chart of the game stats
