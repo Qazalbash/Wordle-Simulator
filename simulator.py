@@ -12,7 +12,7 @@ if __name__ == '__main__':
 
     start = pd.Timestamp.now()
 
-    w.play(10**5)
+    w.play(10**3)
 
     print(pd.Timestamp.now() - start)
 

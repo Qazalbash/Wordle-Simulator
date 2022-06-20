@@ -139,6 +139,7 @@ class Wordle:
             guess = random.choice(self.words)
             color = self.coloring(self._hidden_word, guess)
             game.append(guess)
+            print(self.color_box(color))
 
             if color == "ggggg":
                 self.stats["win"][str(num)] += 1
@@ -159,8 +160,7 @@ class Wordle:
             self (Wordle): mandatory self object
             no_of_games (int, optional): no of times to play the game. Defaults to 100.
         """
-        for _ in range(no_of_games):
-            i = 1
+        for j in range(no_of_games):
             self.allowed = set()
             self.words = self.all_words
             self._hidden_word = random.choice(self.all_words)
@@ -169,8 +169,11 @@ class Wordle:
                 for i in range(5)
             }
 
-            game = []
+            i = 1
 
+            print("Game No:", j, end="\n\n")
+
+            game = []
             while self.turn(i, game):
                 i += 1
             self.all_games.append(game)
@@ -254,3 +257,16 @@ class Wordle:
                 d2[k] = Wordle.recursive_merge(v, d2[k])
         d1.update(d2)
         return d1
+
+    @staticmethod
+    def color_box(color: str) -> str:
+        """converts color string to recongnizable game friendly color boxes
+
+        Args:
+            color (str): string of colors
+
+        Returns:
+            str: color boxes
+        """
+        d = {"b": "⬛", "y": "🟨", "g": "🟩"}
+        return "".join(d[x] for x in color)
